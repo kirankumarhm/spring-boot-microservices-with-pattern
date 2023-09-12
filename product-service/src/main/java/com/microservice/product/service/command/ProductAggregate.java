@@ -3,6 +3,7 @@ package com.microservice.product.service.command;
 import com.microservice.product.service.events.ProductCreatedEvent;
 import org.axonframework.commandhandling.CommandHandler;
 import org.axonframework.eventsourcing.EventSourcingHandler;
+import org.axonframework.modelling.command.AggregateIdentifier;
 import org.axonframework.modelling.command.AggregateLifecycle;
 import org.axonframework.spring.stereotype.Aggregate;
 import org.springframework.beans.BeanUtils;
@@ -12,6 +13,7 @@ import java.math.BigDecimal;
 @Aggregate
 public class ProductAggregate {
 
+    @AggregateIdentifier
     private String productId;
     private String title;
     private BigDecimal price;
@@ -22,7 +24,7 @@ public class ProductAggregate {
     }
 
     @CommandHandler
-    public void createHandler(CreateProductCommand createProductCommand){
+    public ProductAggregate(CreateProductCommand createProductCommand){
         // Validate create product command
 
         if(createProductCommand.getPrice().compareTo(BigDecimal.ZERO) <= 0){
@@ -32,8 +34,7 @@ public class ProductAggregate {
             throw new IllegalArgumentException("Title can not be empty.");
         }
 
-
-        ProductCreatedEvent productCreatedEvent = ProductCreatedEvent.builder().build();
+        ProductCreatedEvent productCreatedEvent = new ProductCreatedEvent();
         BeanUtils.copyProperties(createProductCommand, productCreatedEvent);
         AggregateLifecycle.apply(productCreatedEvent);
     }
