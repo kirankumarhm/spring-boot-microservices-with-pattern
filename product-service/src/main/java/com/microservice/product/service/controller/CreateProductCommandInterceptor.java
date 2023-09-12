@@ -2,6 +2,8 @@ package com.microservice.product.service.controller;
 
 import com.microservice.product.service.command.CreateProductCommand;
 import com.microservice.product.service.model.Product;
+import com.microservice.product.service.model.ProductLookup;
+import com.microservice.product.service.repository.ProductLookupRepository;
 import com.microservice.product.service.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +21,8 @@ import java.util.function.BiFunction;
 @RequiredArgsConstructor
 public class CreateProductCommandInterceptor implements MessageDispatchInterceptor<CommandMessage<?>> {
 
-    private final ProductRepository productRepository;
+//    private final ProductRepository productRepository;
+    private final ProductLookupRepository productLookupRepository;
 
     @Nonnull
     @Override
@@ -40,11 +43,12 @@ public class CreateProductCommandInterceptor implements MessageDispatchIntercept
 //                    throw new IllegalArgumentException("Title can not be empty.");
 //                }
 
-                Product product = productRepository.findByProductIdOrTitle(productCommand.getProductId(), productCommand.getTitle());
+//                Product product = productRepository.findByProductIdOrTitle(productCommand.getProductId(), productCommand.getTitle());
+                ProductLookup productLookup = productLookupRepository.findByProductIdOrTitle(productCommand.getProductId(), productCommand.getTitle());
 
-                log.info("product : {}",product);
+                log.info("product : {}", productLookup);
 
-                if(product != null){
+                if(productLookup != null){
                     throw new IllegalStateException(String.format(
                             "Product with productId %s or title %s already exists"
                             ,productCommand.getProductId(), productCommand.getTitle()));

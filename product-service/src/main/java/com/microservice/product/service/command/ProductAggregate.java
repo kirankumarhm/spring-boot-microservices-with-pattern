@@ -24,7 +24,7 @@ public class ProductAggregate {
     }
 
     @CommandHandler
-    public ProductAggregate(CreateProductCommand createProductCommand){
+    public ProductAggregate(CreateProductCommand createProductCommand)  {
         // Validate create product command
 
         if(createProductCommand.getPrice().compareTo(BigDecimal.ZERO) <= 0){
@@ -37,6 +37,7 @@ public class ProductAggregate {
         ProductCreatedEvent productCreatedEvent = new ProductCreatedEvent();
         BeanUtils.copyProperties(createProductCommand, productCreatedEvent);
         AggregateLifecycle.apply(productCreatedEvent);
+
     }
 
     @EventSourcingHandler

@@ -38,12 +38,14 @@ public class ProductController {
                 .productId(UUID.randomUUID().toString()).build();
 
         String returnValue;
-        try {
-            returnValue = commandGateway.sendAndWait(createProductCommand);
-        } catch (Exception e) {
-//            throw new RuntimeException(e);
-            returnValue = e.getLocalizedMessage();
-        }
+
+        returnValue = commandGateway.sendAndWait(createProductCommand);
+
+//        try {
+//            returnValue = commandGateway.sendAndWait(createProductCommand);
+//        } catch (Exception e) {
+//            returnValue = e.getLocalizedMessage();
+//        }
 
         return returnValue;
     }
