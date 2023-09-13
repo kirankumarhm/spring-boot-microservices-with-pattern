@@ -1,4 +1,4 @@
-package com.microservice.product.service.service;
+package com.microservice.product.service.events;
 
 import com.microservice.product.service.events.ProductCreatedEvent;
 import com.microservice.product.service.model.Product;
