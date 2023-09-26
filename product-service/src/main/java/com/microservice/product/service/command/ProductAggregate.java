@@ -1,5 +1,7 @@
 package com.microservice.product.service.command;
 
+import com.microservice.corelibrary.command.ReserveProductCommand;
+import com.microservice.corelibrary.events.ProductReservedEvent;
 import com.microservice.product.service.events.ProductCreatedEvent;
 import org.axonframework.commandhandling.CommandHandler;
 import org.axonframework.eventsourcing.EventSourcingHandler;
@@ -40,11 +42,27 @@ public class ProductAggregate {
 
     }
 
+    @CommandHandler
+    public void handle(ReserveProductCommand reserveProductCommand){
+        if(quantity < reserveProductCommand.getQuantity()){
+            throw new IllegalArgumentException("Insufficient number of items in stock");
+        }
+
+        ProductReservedEvent productReservedEvent = new ProductReservedEvent();
+        BeanUtils.copyProperties(reserveProductCommand, productReservedEvent);
+        AggregateLifecycle.apply(productReservedEvent);
+    }
+
     @EventSourcingHandler
     public void on(ProductCreatedEvent productCreatedEvent){
         this.productId = productCreatedEvent.getProductId();
         this.title = productCreatedEvent.getTitle();
         this.price = productCreatedEvent.getPrice();
         this.quantity = productCreatedEvent.getQuantity();
+    }
+
+    @EventSourcingHandler
+    public void on(ProductReservedEvent productReservedEvent){
+        this.quantity -= productReservedEvent.getQuantity();
     }
 }

@@ -1,11 +1,13 @@
 package com.microservice.product.service.events;
 
+import com.microservice.corelibrary.events.ProductReservedEvent;
 import com.microservice.product.service.dto.ProductRespose;
 import com.microservice.product.service.events.ProductCreatedEvent;
 import com.microservice.product.service.model.Product;
 import com.microservice.product.service.query.FindProductQuery;
 import com.microservice.product.service.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.axonframework.config.ProcessingGroup;
 import org.axonframework.eventhandling.EventHandler;
 import org.axonframework.messaging.interceptors.ExceptionHandler;
@@ -20,6 +22,7 @@ import java.util.stream.Collectors;
 @Component
 @RequiredArgsConstructor
 @ProcessingGroup("product-group")
+@Slf4j
 public class ProductEventHandler {
     private final ProductRepository productRepository;
 
@@ -42,5 +45,15 @@ public class ProductEventHandler {
         productRepository.saveAndFlush(product);
     }
 
+    @EventHandler
+    public void on(ProductReservedEvent productReservedEvent) throws Exception {
+
+        Product product = productRepository.findByProductId(productReservedEvent.getProductId());
+        product.setQuantity(product.getQuantity() - productReservedEvent.getQuantity());
+        productRepository.saveAndFlush(product);
+
+        log.info("ProductReservedEvent handled for orderId {} and productId {}",
+                productReservedEvent.getOrderId(), productReservedEvent.getProductId());
+    }
 
 }

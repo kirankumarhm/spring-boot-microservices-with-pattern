@@ -55,7 +55,8 @@ public class ProductController {
     public List<ProductRespose> getProducts(){
         FindProductQuery findProductQuery = new FindProductQuery();
 
-        List<ProductRespose> productResposeList = queryGateway.query(findProductQuery, ResponseTypes.multipleInstancesOf(ProductRespose.class)).join();
+        List<ProductRespose> productResposeList = queryGateway.query(findProductQuery,
+                ResponseTypes.multipleInstancesOf(ProductRespose.class)).join();
 
         return productResposeList;
     }
