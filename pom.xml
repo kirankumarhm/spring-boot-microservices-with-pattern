@@ -36,6 +36,7 @@
 		<module>product-service</module>
 		<module>core-library</module>
 		<module>user-service</module>
+		<module>payments-service</module>
 	</modules>
 
 

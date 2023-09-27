@@ -19,4 +19,15 @@ public class OrderEventsHandler {
         BeanUtils.copyProperties(orderCreatedEvent, order);
         orderRepository.saveAndFlush(order);
     }
+
+    @EventHandler
+    public void on(OrderApprovedEvent orderApprovedEvent){
+        Order order = orderRepository.findByOrderId(orderApprovedEvent.getOrderId());
+
+        if( order == null){
+            return;
+        }
+        order.setOrderStatus(orderApprovedEvent.getOrderStatus());
+        orderRepository.saveAndFlush(order);
+    }
 }
