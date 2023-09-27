@@ -2,6 +2,7 @@ package com.microservice.order.service.command;
 
 import com.microservice.order.service.event.OrderApprovedEvent;
 import com.microservice.order.service.event.OrderCreatedEvent;
+import com.microservice.order.service.event.OrderRejectedEvent;
 import com.microservice.order.service.model.OrderStatus;
 import org.axonframework.commandhandling.CommandHandler;
 import org.axonframework.eventsourcing.EventSourcingHandler;
@@ -44,15 +45,25 @@ public class OrderAggregate {
 
     @CommandHandler
     public void handle(ApproveOrderCommand approveOrderCommand){
-        //
         OrderApprovedEvent orderApprovedEvent =
                 new OrderApprovedEvent(approveOrderCommand.getOrderId());
-
         AggregateLifecycle.apply(orderApprovedEvent);
+    }
+
+    @CommandHandler
+    public void handle(RejectOrderCommand rejectOrderCommand){
+        OrderRejectedEvent orderRejectedEvent =
+                new OrderRejectedEvent(rejectOrderCommand.getOrderId(), rejectOrderCommand.getReason());
+        AggregateLifecycle.apply(orderRejectedEvent);
     }
 
     @EventSourcingHandler
     public void on(OrderApprovedEvent orderApprovedEvent){
         this.orderStatus = orderApprovedEvent.getOrderStatus();
+    }
+
+    @EventSourcingHandler
+    public void on(OrderRejectedEvent orderRejectedEvent){
+        this.orderStatus = orderRejectedEvent.getOrderStatus();
     }
 }

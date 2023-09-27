@@ -1,6 +1,8 @@
 package com.microservice.product.service.command;
 
+import com.microservice.corelibrary.command.CancelProductReservationCommand;
 import com.microservice.corelibrary.command.ReserveProductCommand;
+import com.microservice.corelibrary.events.ProductReservationCancelledEvent;
 import com.microservice.corelibrary.events.ProductReservedEvent;
 import com.microservice.product.service.events.ProductCreatedEvent;
 import org.axonframework.commandhandling.CommandHandler;
@@ -53,6 +55,15 @@ public class ProductAggregate {
         AggregateLifecycle.apply(productReservedEvent);
     }
 
+    @CommandHandler
+    public void handle(CancelProductReservationCommand cancelProductReservationCommand){
+
+        ProductReservationCancelledEvent productReservationCancelledEvent = new ProductReservationCancelledEvent();
+        BeanUtils.copyProperties(cancelProductReservationCommand, productReservationCancelledEvent);
+
+        AggregateLifecycle.apply(productReservationCancelledEvent);
+    }
+
     @EventSourcingHandler
     public void on(ProductCreatedEvent productCreatedEvent){
         this.productId = productCreatedEvent.getProductId();
@@ -64,5 +75,10 @@ public class ProductAggregate {
     @EventSourcingHandler
     public void on(ProductReservedEvent productReservedEvent){
         this.quantity -= productReservedEvent.getQuantity();
+    }
+
+    @EventSourcingHandler
+    public void on(ProductReservationCancelledEvent productReservationCancelledEvent){
+        this.quantity += productReservationCancelledEvent.getQuantity();
     }
 }

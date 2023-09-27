@@ -30,4 +30,15 @@ public class OrderEventsHandler {
         order.setOrderStatus(orderApprovedEvent.getOrderStatus());
         orderRepository.saveAndFlush(order);
     }
+
+    @EventHandler
+    public void on(OrderRejectedEvent orderRejectedEvent){
+        Order order = orderRepository.findByOrderId(orderRejectedEvent.getOrderId());
+
+        if( order == null){
+            return;
+        }
+        order.setOrderStatus(orderRejectedEvent.getOrderStatus());
+        orderRepository.saveAndFlush(order);
+    }
 }

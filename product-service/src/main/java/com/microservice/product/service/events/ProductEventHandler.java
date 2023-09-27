@@ -1,5 +1,6 @@
 package com.microservice.product.service.events;
 
+import com.microservice.corelibrary.events.ProductReservationCancelledEvent;
 import com.microservice.corelibrary.events.ProductReservedEvent;
 import com.microservice.product.service.dto.ProductRespose;
 import com.microservice.product.service.events.ProductCreatedEvent;
@@ -56,4 +57,14 @@ public class ProductEventHandler {
                 productReservedEvent.getOrderId(), productReservedEvent.getProductId());
     }
 
+    @EventHandler
+    public void on(ProductReservationCancelledEvent productReservationCancelledEvent) throws Exception {
+
+        Product product = productRepository.findByProductId(productReservationCancelledEvent.getProductId());
+        product.setQuantity(product.getQuantity() + productReservationCancelledEvent.getQuantity());
+        productRepository.saveAndFlush(product);
+
+        log.info("ProductReservationCancelledEvent handled for orderId {} and productId {}",
+                productReservationCancelledEvent.getOrderId(), productReservationCancelledEvent.getProductId());
+    }
 }
