@@ -1,0 +1,234 @@
+version: '3.3'
+services:
+  discovery-service:
+    container_name: discovery-service
+    hostname: discovery-service
+#    build: ./discovery-service/.
+    ports:
+      - '8761:8761'
+    restart: on-failure
+    healthcheck:
+      test: curl --fail http://localhost:8761/eureka/v2/apps || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 10
+    environment:
+      - SERVER_PORT=8761
+      - LOGGING_LEVEL_ROOT=info
+#      - LOGGING_LEVEL_COM_LANKYDAN_SERVICE=error
+#      - LOGGING_PATH=logs
+#      - LOGGING_FILE=${logging_path}/log_log
+#      - LOGGING_PATTERN_FILE=%d{dd-MM-yyyy HH:mm:ss} [%file:%line]  - %msg%n
+      - LOGGING_PATTERN_CONSOLE=%d{dd-MM-yyyy HH:mm:ss} [%-5level] [%file:%line] - %msg%n
+      - EUREKA_INSTANCE_HOSTNAME=discovery-service
+      - EUREKA_CLIENT_REGISTER_WITH_EUREKA=false
+      - EUREKA_CLIENT_FETCH_REGISTRY=false
+      - EUREKA_CLIENT_SERVER_URL_DEFAULT_ZONE=http://\$${eureka.instance.hostname}:\$${server.port}/eureka/
+    image: kirankumarhm/discovery-service:0.0.1
+
+  axon-server:
+    image: axoniq/axonserver
+    hostname: axon-server
+    container_name: axon-server
+    environment:
+      - AXONIQ_AXONSERVER_DEVMODE_ENABLED=true
+      - AXONIQ_AXONSERVER_HOSTNAME=axon-server
+      - AXONIQ_AXONSERVER_NAME=axon-server
+    healthcheck:
+      test: "curl --fail --silent localhost:8024/actuator/health | grep UP || exit 1"
+      interval: 30s
+      timeout: 10s
+      retries: 10
+    restart: on-failure
+    volumes:
+      - ./data/axonserver/data:/data
+      - ./data/axonserver/events:/eventdata
+      - ./data/axonserver/config:/config:ro
+    ports:
+      - '8024:8024'
+      - '8124:8124'
+      - '8224:8224'
+
+  product-service:
+#    build: ./product-service
+    hostname: product-service
+    ports:
+      - '8081:8081'
+    depends_on:
+      discovery-service:
+        condition: service_started
+      axon-server:
+        condition: service_started
+    image: kirankumarhm/product-service:0.0.1
+    container_name: product-service
+    restart: on-failure
+    environment:
+      - SERVER_PORT=8081
+      - SPRING_DATASOURCE_URL=jdbc:h2:file:./data/product-service/productsdb;AUTO_SERVER=true
+      - SPRING_DATASOURCE_USERNAME=user1
+      - SPRING_DATASOURCE_PASSWORD=pass123
+      - SPRING_DATASOURCE_DRIVER-CLASS-NAME=org.h2.Driver
+      - SPRING_JPA_DATABASE-PLATFORM=org.hibernate.dialect.H2Dialect
+      - SPRING_JPA_HIBERNATE_DDL-AUTO=update
+      - SPRING_H2_CONSOLE_ENABLED=true
+      - SPRING_H2_CONSOLE_SETTINGS_WEB-ALLOW-OTHERS=true
+      - SERVER_ERROR_INCLUDE-MESSAGE=always
+      - SERVER_ERROR_INCLUDE-BINDING-ERRORS=always
+      - AXON_EVENTHANDLING_PROCESSORS_PRODUCT-GROUP_MODE=subscribing
+      - SPRING_APPLICATION_NAME=product-service
+      - EUREKA_CLIENT_SERVICE-URL_DEFAULT-ZONE=http://discovery-service:8761/eureka/
+      - LOGGING_LEVEL_ROOT=info
+      - LOGGING_PATTERN_CONSOLE=%d{dd-MM-yyyy HH:mm:ss} [%-5level] [%file:%line] - %msg%n
+      - AXON_AXONSERVER_SERVERS=axon-server:8124
+    volumes:
+      - ./data/product-service/productsdb:/data/product-service/productsdb:rw
+
+  order-service:
+    container_name: order-service
+    hostname: order-service
+#    build: ./order-service
+    ports:
+      - '8082:8082'
+    restart: on-failure
+    depends_on:
+      discovery-service:
+        condition: service_started
+      axon-server:
+        condition: service_started
+    image: kirankumarhm/order-service:0.0.1
+    environment:
+      - SERVER_PORT=8082
+      - SPRING_DATASOURCE_URL=jdbc:h2:file:./data/order-service/ordersdb;AUTO_SERVER=true
+      - SPRING_DATASOURCE_USERNAME=user1
+      - SPRING_DATASOURCE_PASSWORD=pass123
+      - SPRING_DATASOURCE_DRIVER-CLASS-NAME=org.h2.Driver
+      - SPRING_JPA_DATABASE-PLATFORM=org.hibernate.dialect.H2Dialect
+      - SPRING_JPA_HIBERNATE_DDL-AUTO=update
+      - SPRING_H2_CONSOLE_ENABLED=true
+      - SPRING_H2_CONSOLE_SETTINGS_WEB-ALLOW-OTHERS=true
+      - SERVER_ERROR_INCLUDE-MESSAGE=always
+      - SERVER_ERROR_INCLUDE-BINDING-ERRORS=always
+      - AXON_EVENTHANDLING_PROCESSORS_ORDER-GROUP_MODE=subscribing
+      - SPRING_APPLICATION_NAME=order-service
+      - EUREKA_CLIENT_SERVICE-URL_DEFAULT-ZONE=http://discovery-service:8761/eureka/
+      - LOGGING_LEVEL_ROOT=info
+      - LOGGING_PATTERN_CONSOLE=%d{dd-MM-yyyy HH:mm:ss} [%-5level] [%file:%line] - %msg%n
+      - AXON_AXONSERVER_SERVERS=axon-server:8124
+    volumes:
+      - ./data/order-service/ordersdb:/data/order-service/ordersdb:rw
+
+  user-service:
+    container_name: user-service
+    hostname: user-service
+#    build: ./user-service
+    ports:
+      - '8083:8083'
+    restart: on-failure
+    depends_on:
+      discovery-service:
+        condition: service_started
+      axon-server:
+        condition: service_started
+    image: kirankumarhm/user-service:0.0.1
+    environment:
+      - SERVER_PORT=8083
+      - SPRING_DATASOURCE_URL=jdbc:h2:file:./data/user-service/usersdb;AUTO_SERVER=true
+      - SPRING_DATASOURCE_USERNAME=user1
+      - SPRING_DATASOURCE_PASSWORD=pass123
+      - SPRING_DATASOURCE_DRIVER-CLASS-NAME=org.h2.Driver
+      - SPRING_JPA_DATABASE-PLATFORM=org.hibernate.dialect.H2Dialect
+      - SPRING_JPA_HIBERNATE_DDL-AUTO=update
+      - SPRING_H2_CONSOLE_ENABLED=true
+      - SPRING_H2_CONSOLE_SETTINGS_WEB-ALLOW-OTHERS=true
+      - SERVER_ERROR_INCLUDE-MESSAGE=always
+      - SERVER_ERROR_INCLUDE-BINDING-ERRORS=always
+      - AXON_EVENTHANDLING_PROCESSORS_USER-GROUP_MODE=subscribing
+      - SPRING_APPLICATION_NAME=user-service
+      - EUREKA_CLIENT_SERVICE-URL_DEFAULT-ZONE=http://discovery-service:8761/eureka/
+      - LOGGING_LEVEL_ROOT=info
+      - LOGGING_PATTERN_CONSOLE=%d{dd-MM-yyyy HH:mm:ss} [%-5level] [%file:%line] - %msg%n
+      - AXON_AXONSERVER_SERVERS=axon-server:8124
+    volumes:
+      - ./data/user-service/usersdb:/data/user-service/usersdb:rw
+
+  payment-service:
+    container_name: payment-service
+    hostname: payment-service
+#    build: ./payment-service
+    ports:
+      - '8085:8085'
+    restart: on-failure
+    depends_on:
+      discovery-service:
+        condition: service_started
+      axon-server:
+        condition: service_started
+    image: kirankumarhm/payments-service:0.0.1
+    environment:
+      - SERVER_PORT=8085
+      - SPRING_DATASOURCE_URL=jdbc:h2:file:./data/payment-service/paymentsdb;AUTO_SERVER=true
+      - SPRING_DATASOURCE_USERNAME=user1
+      - SPRING_DATASOURCE_PASSWORD=pass123
+      - SPRING_DATASOURCE_DRIVER-CLASS-NAME=org.h2.Driver
+      - SPRING_JPA_DATABASE-PLATFORM=org.hibernate.dialect.H2Dialect
+      - SPRING_JPA_HIBERNATE_DDL-AUTO=update
+      - SPRING_H2_CONSOLE_ENABLED=true
+      - SPRING_H2_CONSOLE_SETTINGS_WEB-ALLOW-OTHERS=true
+      - SERVER_ERROR_INCLUDE-MESSAGE=always
+      - SERVER_ERROR_INCLUDE-BINDING-ERRORS=always
+      - AXON_EVENTHANDLING_PROCESSORS_PAYMENT-GROUP_MODE=subscribing
+      - SPRING_APPLICATION_NAME=payment-service
+      - EUREKA_CLIENT_SERVICE-URL_DEFAULT-ZONE=http://discovery-service:8761/eureka/
+      - LOGGING_LEVEL_ROOT=info
+      - LOGGING_PATTERN_CONSOLE=%d{dd-MM-yyyy HH:mm:ss} [%-5level] [%file:%line] - %msg%n
+      - AXON_AXONSERVER_SERVERS=axon-server:8124
+    volumes:
+      - ./data/payment-service/paymentsdb:/data/payment-service/paymentsdb:rw
+
+  api-gateway-service:
+    container_name: api-gateway-service
+    hostname: api-gateway-service
+#    build: ./api-gateway-service
+    ports:
+      - '8084:8084'
+    restart: on-failure
+    depends_on:
+      discovery-service:
+        condition: service_started
+      product-service:
+        condition: service_started
+      order-service:
+        condition: service_started
+      payment-service:
+        condition: service_started
+      user-service:
+        condition: service_started
+    image: kirankumarhm/api-gateway-service:0.0.1
+    environment:
+      - SERVER_PORT=8084
+      - SPRING_APPLICATION_NAME=api-gateway-service
+      - EUREKA_CLIENT_SERVICE-URL_DEFAULT-ZONE=http://discovery-service:8761/eureka/
+      - SPRING_CLOUD_GATEWAY_ROUTES[0]_ID=product-service
+      - SPRING_CLOUD_GATEWAY_ROUTES[0]_URI=lb://product-service
+      - SPRING_CLOUD_GATEWAY_ROUTES[0]_PREDICATES[0]=Path=/api/product
+      - SPRING_CLOUD_GATEWAY_ROUTES[1]_ID=discovery-server
+      - SPRING_CLOUD_GATEWAY_ROUTES[1]_URI=http://discovery-service:8761
+      - SPRING_CLOUD_GATEWAY_ROUTES[1]_PREDICATES[0]=Path=/eureka/web
+      - SPRING_CLOUD_GATEWAY_ROUTES[1]_FILTERS[0]=SetPath=/
+      - SPRING_CLOUD_GATEWAY_ROUTES[2]_ID=discovery-server-static
+      - SPRING_CLOUD_GATEWAY_ROUTES[2]_URI=http://discovery-service:8761
+      - SPRING_CLOUD_GATEWAY_ROUTES[2]_PREDICATES[0]=Path=/eureka/**
+      - SPRING_CLOUD_GATEWAY_ROUTES[3]_ID=order-service
+      - SPRING_CLOUD_GATEWAY_ROUTES[3]_URI=lb://order-service
+      - SPRING_CLOUD_GATEWAY_ROUTES[3]_PREDICATES[0]=Path=/api/order
+      - SPRING_CLOUD_GATEWAY_ROUTES[4]_ID=user-service
+      - SPRING_CLOUD_GATEWAY_ROUTES[4]_URI=lb://user-service
+      - SPRING_CLOUD_GATEWAY_ROUTES[4]_PREDICATES[0]=Path=/users
+      - LOGGING_LEVEL_ROOT=info
+#      - LOGGING_LEVEL_COM_LANKYDAN_SERVICE=error
+#      - LOGGING_PATH=logs
+#      - LOGGING_FILE=${logging_path}/log.log
+#      - LOGGING_PATTERN_FILE=%d{dd-MM-yyyy HH:mm:ss} [%file:%line]  - %msg%n
+      - LOGGING_PATTERN_CONSOLE=%d{dd-MM-yyyy HH:mm:ss} [%-5level] [%file:%line] - %msg%n
+
+

@@ -13,7 +13,7 @@
 	<groupId>com.microservice.example</groupId>
 	<artifactId>microservice-example</artifactId>
 	<packaging>pom</packaging>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.0.1</version>
 	<name>microservice-example</name>
 	<description>Demo project for Spring Boot</description>
 
