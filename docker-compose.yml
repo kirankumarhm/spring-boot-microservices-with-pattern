@@ -28,11 +28,11 @@ services:
       - EUREKA_CLIENT_FETCH_REGISTRY=false
       - EUREKA_CLIENT_SERVER_URL_DEFAULT_ZONE=http://localhost:8761/eureka/
     image: kirankumarhm/discovery-service:0.0.1
-    pull_policy: always
+
 
   axon-server:
     image: axoniq/axonserver
-    pull_policy: always
+
     hostname: axon-server
     container_name: axon-server
     environment:
@@ -65,7 +65,7 @@ services:
         condition: service_started
     image: kirankumarhm/product-service:0.0.1
     command: [ "sh", "-c", "sleep 2m" ]
-    pull_policy: always
+
     container_name: product-service
     environment:
       - SERVER_PORT=8081
@@ -101,7 +101,7 @@ services:
         condition: service_started
     image: kirankumarhm/order-service:0.0.1
     command: [ "sh", "-c", "sleep 2m" ]
-    pull_policy: always
+
     environment:
       - SERVER_PORT=8082
       - SPRING_DATASOURCE_URL=jdbc:h2:file:./data/order-service/ordersdb;AUTO_SERVER=true
@@ -136,7 +136,7 @@ services:
         condition: service_started
     image: kirankumarhm/user-service:0.0.1
     command: [ "sh", "-c", "sleep 2m" ]
-    pull_policy: always
+
     environment:
       - SERVER_PORT=8083
       - SPRING_DATASOURCE_URL=jdbc:h2:file:./data/user-service/usersdb;AUTO_SERVER=true
@@ -171,7 +171,7 @@ services:
         condition: service_started
     image: kirankumarhm/payments-service:0.0.1
     command: [ "sh", "-c", "sleep 2m" ]
-    pull_policy: always
+
     environment:
       - SERVER_PORT=8085
       - SPRING_DATASOURCE_URL=jdbc:h2:file:./data/payment-service/paymentsdb;AUTO_SERVER=true
@@ -216,7 +216,7 @@ services:
         condition: service_started
     image: kirankumarhm/api-gateway-service:0.0.1
     command: [ "sh", "-c", "sleep 2m" ]
-    pull_policy: always
+
     environment:
       - SERVER_PORT=8084
       - SPRING_APPLICATION_NAME=api-gateway-service
