@@ -9,7 +9,7 @@
         <version>0.0.1</version>
     </parent>
 
-<!--    <groupId>com.microservice.example</groupId>-->
+    <!--    <groupId>com.microservice.example</groupId>-->
     <artifactId>discovery-service</artifactId>
     <version>0.0.1</version>
     <name>discovery-service</name>
@@ -35,6 +35,7 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
+
     </dependencies>
 
 
@@ -50,26 +51,111 @@
         </dependencies>
     </dependencyManagement>
 
+<!--
+1. It really does not matter whether you have profiles and different properties for each environment for building docker image.
+2. Each property entries can be overridden by Kubernetes Deployment environment variables.
+3. Special case for discovery-service :- We need to create headless service and refer that headless service in StatefulSet
+StatefulSet is required to maintain the host registry, as pod will be created with the dynamic has value appended with pod name.
+and we need to refer with hostname. StatefulSet does not work alone, we have to create headless service.
+headless service : A service is a without ip address and creates endpoint
+
+So, I am commenting out the profiles segment and keep it simple build
+And as I mentioned in the #2 I will delete application-dev.properties and application-prod.properties
+-->
+    <!--
+    <profiles>
+        <profile>
+            <id>dev</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <spring.profiles.active>dev</spring.profiles.active>
+            </properties>
+            <build>
+                <resources>
+                    <resource>
+                        <directory>src/main/resources</directory>
+                        <filtering>true</filtering>
+                    </resource>
+                </resources>
+                <plugins>
+                    <plugin>
+                        <groupId>org.springframework.boot</groupId>
+                        <artifactId>spring-boot-maven-plugin</artifactId>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>prod</id>
+            <properties>
+                <spring.profiles.active>cloud</spring.profiles.active>
+            </properties>
+            <build>
+                <resources>
+                    <resource>
+                        <directory>src/main/resources</directory>
+                        <filtering>true</filtering>
+                    </resource>
+                </resources>
+                <plugins>
+                    <plugin>
+                        <groupId>com.google.cloud.tools</groupId>
+                        <artifactId>jib-maven-plugin</artifactId>
+                        <version>3.3.2</version>
+                        <configuration>
+                            <from>
+                                <image>eclipse-temurin:20-jdk-jammy</image>
+                            </from>
+                            <to>
+                                <image>docker.io/kirankumarhm/${project.name}:${project.version}</image>
+                            </to>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>build</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+-->
+
+
     <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>com.google.cloud.tools</groupId>
+                    <artifactId>jib-maven-plugin</artifactId>
+                    <version>3.3.2</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
 
-
             <plugin>
                 <groupId>com.google.cloud.tools</groupId>
                 <artifactId>jib-maven-plugin</artifactId>
                 <version>3.3.2</version>
                 <configuration>
-                    <from>
-                        <image>eclipse-temurin:20-jdk-jammy</image>
-                    </from>
                     <to>
                         <image>docker.io/kirankumarhm/${project.name}:${project.version}</image>
                     </to>
-
+                    <from>
+                        <image>eclipse-temurin:20-jdk-jammy</image>
+                    </from>
                 </configuration>
                 <executions>
                     <execution>

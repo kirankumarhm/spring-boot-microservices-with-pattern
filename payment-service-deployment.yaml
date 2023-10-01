@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    io.kompose.service: payment-service
+  name: payment-service
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: payment-service
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        io.kompose.network/microservice-example-default: "true"
+        io.kompose.service: payment-service
+    spec:
+      containers:
+        - args:
+            - sh
+            - -c
+            - sleep 2m
+          env:
+            - name: AXON_AXONSERVER_SERVERS
+              value: axon-server:8124
+            - name: AXON_EVENTHANDLING_PROCESSORS_PAYMENT-GROUP_MODE
+              value: subscribing
+            - name: EUREKA_CLIENT_SERVICE-URL_DEFAULT-ZONE
+              value: http://discovery-service:8761/eureka/
+            - name: LOGGING_LEVEL_ROOT
+              value: info
+            - name: LOGGING_PATTERN_CONSOLE
+              value: '%d{dd-MM-yyyy HH:mm:ss} [%-5level] [%file:%line] - %msg%n'
+            - name: SERVER_ERROR_INCLUDE-BINDING-ERRORS
+              value: always
+            - name: SERVER_ERROR_INCLUDE-MESSAGE
+              value: always
+            - name: SERVER_PORT
+              value: "8085"
+            - name: SPRING_APPLICATION_NAME
+              value: payment-service
+            - name: SPRING_DATASOURCE_DRIVER-CLASS-NAME
+              value: org.h2.Driver
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: pass123
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:h2:file:./data/payment-service/paymentsdb;AUTO_SERVER=true
+            - name: SPRING_DATASOURCE_USERNAME
+              value: user1
+            - name: SPRING_H2_CONSOLE_ENABLED
+              value: "true"
+            - name: SPRING_H2_CONSOLE_SETTINGS_WEB-ALLOW-OTHERS
+              value: "true"
+            - name: SPRING_JPA_DATABASE-PLATFORM
+              value: org.hibernate.dialect.H2Dialect
+            - name: SPRING_JPA_HIBERNATE_DDL-AUTO
+              value: update
+            - name: SPRING_CLOUD_BOOTSTRAP_ENABLED
+              value: "true"
+            - name: SPRING_CLOUD_KUBERNETES_SECRETS_ENABLEAPI
+              value: "true"
+          image: kirankumarhm/payments-service:0.0.1
+          imagePullPolicy: Always
+          name: payment-service
+          ports:
+            - containerPort: 8085
+              hostPort: 8085
+              protocol: TCP
+          resources: {}
+          volumeMounts:
+            - mountPath: /data/payment-service/paymentsdb
+              name: payment-service-hostpath0
+      hostname: payment-service
+      restartPolicy: Always
+      volumes:
+        - hostPath:
+            path: /tmp/data/payment-service/paymentsdb
+          name: payment-service-hostpath0
+

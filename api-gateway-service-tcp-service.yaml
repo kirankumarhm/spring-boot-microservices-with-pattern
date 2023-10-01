@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    io.kompose.service: api-gateway-service-tcp
+  name: api-gateway-service-tcp
+  namespace: default
+spec:
+  externalTrafficPolicy: Local
+  ports:
+    - name: "8084"
+      port: 8084
+      targetPort: 8084
+  selector:
+    io.kompose.service: api-gateway-service
+  type: LoadBalancer
+

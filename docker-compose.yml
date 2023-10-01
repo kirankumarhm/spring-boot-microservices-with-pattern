@@ -3,10 +3,13 @@ services:
   discovery-service:
     container_name: discovery-service
     hostname: discovery-service
-#    build: ./discovery-service/.
+    #    build: ./discovery-service/.
     ports:
       - '8761:8761'
-    restart: on-failure
+    labels:
+      kompose.service.expose: lb
+      kompose.service.external-traffic-policy: local
+      kompose.service.type: loadbalancer
     healthcheck:
       test: curl --fail http://localhost:8761/eureka/v2/apps || exit 1
       interval: 30s
@@ -15,19 +18,21 @@ services:
     environment:
       - SERVER_PORT=8761
       - LOGGING_LEVEL_ROOT=info
-#      - LOGGING_LEVEL_COM_LANKYDAN_SERVICE=error
-#      - LOGGING_PATH=logs
-#      - LOGGING_FILE=${logging_path}/log_log
-#      - LOGGING_PATTERN_FILE=%d{dd-MM-yyyy HH:mm:ss} [%file:%line]  - %msg%n
+      #      - LOGGING_LEVEL_COM_LANKYDAN_SERVICE=error
+      #      - LOGGING_PATH=logs
+      #      - LOGGING_FILE=${logging_path}/log_log
+      #      - LOGGING_PATTERN_FILE=%d{dd-MM-yyyy HH:mm:ss} [%file:%line]  - %msg%n
       - LOGGING_PATTERN_CONSOLE=%d{dd-MM-yyyy HH:mm:ss} [%-5level] [%file:%line] - %msg%n
       - EUREKA_INSTANCE_HOSTNAME=discovery-service
       - EUREKA_CLIENT_REGISTER_WITH_EUREKA=false
       - EUREKA_CLIENT_FETCH_REGISTRY=false
-      - EUREKA_CLIENT_SERVER_URL_DEFAULT_ZONE=http://\$${eureka.instance.hostname}:\$${server.port}/eureka/
+      - EUREKA_CLIENT_SERVER_URL_DEFAULT_ZONE=http://localhost:8761/eureka/
     image: kirankumarhm/discovery-service:0.0.1
+    pull_policy: always
 
   axon-server:
     image: axoniq/axonserver
+    pull_policy: always
     hostname: axon-server
     container_name: axon-server
     environment:
@@ -39,18 +44,17 @@ services:
       interval: 30s
       timeout: 10s
       retries: 10
-    restart: on-failure
     volumes:
-      - ./data/axonserver/data:/data
-      - ./data/axonserver/events:/eventdata
-      - ./data/axonserver/config:/config:ro
+      - /tmp/data/axonserver/data:/data
+      - /tmp/data/axonserver/events:/eventdata
+      - /tmp/data/axonserver/config:/config:ro
     ports:
       - '8024:8024'
       - '8124:8124'
       - '8224:8224'
 
   product-service:
-#    build: ./product-service
+    #    build: ./product-service
     hostname: product-service
     ports:
       - '8081:8081'
@@ -60,8 +64,9 @@ services:
       axon-server:
         condition: service_started
     image: kirankumarhm/product-service:0.0.1
+    command: [ "sh", "-c", "sleep 2m" ]
+    pull_policy: always
     container_name: product-service
-    restart: on-failure
     environment:
       - SERVER_PORT=8081
       - SPRING_DATASOURCE_URL=jdbc:h2:file:./data/product-service/productsdb;AUTO_SERVER=true
@@ -81,21 +86,22 @@ services:
       - LOGGING_PATTERN_CONSOLE=%d{dd-MM-yyyy HH:mm:ss} [%-5level] [%file:%line] - %msg%n
       - AXON_AXONSERVER_SERVERS=axon-server:8124
     volumes:
-      - ./data/product-service/productsdb:/data/product-service/productsdb:rw
+      - /tmp/data/product-service/productsdb:/data/product-service/productsdb:rw
 
   order-service:
     container_name: order-service
     hostname: order-service
-#    build: ./order-service
+    #    build: ./order-service
     ports:
       - '8082:8082'
-    restart: on-failure
     depends_on:
       discovery-service:
         condition: service_started
       axon-server:
         condition: service_started
     image: kirankumarhm/order-service:0.0.1
+    command: [ "sh", "-c", "sleep 2m" ]
+    pull_policy: always
     environment:
       - SERVER_PORT=8082
       - SPRING_DATASOURCE_URL=jdbc:h2:file:./data/order-service/ordersdb;AUTO_SERVER=true
@@ -115,21 +121,22 @@ services:
       - LOGGING_PATTERN_CONSOLE=%d{dd-MM-yyyy HH:mm:ss} [%-5level] [%file:%line] - %msg%n
       - AXON_AXONSERVER_SERVERS=axon-server:8124
     volumes:
-      - ./data/order-service/ordersdb:/data/order-service/ordersdb:rw
+      - /tmp/data/order-service/ordersdb:/data/order-service/ordersdb:rw
 
   user-service:
     container_name: user-service
     hostname: user-service
-#    build: ./user-service
+    #    build: ./user-service
     ports:
       - '8083:8083'
-    restart: on-failure
     depends_on:
       discovery-service:
         condition: service_started
       axon-server:
         condition: service_started
     image: kirankumarhm/user-service:0.0.1
+    command: [ "sh", "-c", "sleep 2m" ]
+    pull_policy: always
     environment:
       - SERVER_PORT=8083
       - SPRING_DATASOURCE_URL=jdbc:h2:file:./data/user-service/usersdb;AUTO_SERVER=true
@@ -149,21 +156,22 @@ services:
       - LOGGING_PATTERN_CONSOLE=%d{dd-MM-yyyy HH:mm:ss} [%-5level] [%file:%line] - %msg%n
       - AXON_AXONSERVER_SERVERS=axon-server:8124
     volumes:
-      - ./data/user-service/usersdb:/data/user-service/usersdb:rw
+      - /tmp/data/user-service/usersdb:/data/user-service/usersdb:rw
 
   payment-service:
     container_name: payment-service
     hostname: payment-service
-#    build: ./payment-service
+    #    build: ./payment-service
     ports:
       - '8085:8085'
-    restart: on-failure
     depends_on:
       discovery-service:
         condition: service_started
       axon-server:
         condition: service_started
     image: kirankumarhm/payments-service:0.0.1
+    command: [ "sh", "-c", "sleep 2m" ]
+    pull_policy: always
     environment:
       - SERVER_PORT=8085
       - SPRING_DATASOURCE_URL=jdbc:h2:file:./data/payment-service/paymentsdb;AUTO_SERVER=true
@@ -183,15 +191,18 @@ services:
       - LOGGING_PATTERN_CONSOLE=%d{dd-MM-yyyy HH:mm:ss} [%-5level] [%file:%line] - %msg%n
       - AXON_AXONSERVER_SERVERS=axon-server:8124
     volumes:
-      - ./data/payment-service/paymentsdb:/data/payment-service/paymentsdb:rw
+      - /tmp/data/payment-service/paymentsdb:/data/payment-service/paymentsdb:rw
 
   api-gateway-service:
     container_name: api-gateway-service
     hostname: api-gateway-service
-#    build: ./api-gateway-service
+    #    build: ./api-gateway-service
+    labels:
+      kompose.service.expose: lb
+      kompose.service.external-traffic-policy: local
+      kompose.service.type: loadbalancer
     ports:
       - '8084:8084'
-    restart: on-failure
     depends_on:
       discovery-service:
         condition: service_started
@@ -204,6 +215,8 @@ services:
       user-service:
         condition: service_started
     image: kirankumarhm/api-gateway-service:0.0.1
+    command: [ "sh", "-c", "sleep 2m" ]
+    pull_policy: always
     environment:
       - SERVER_PORT=8084
       - SPRING_APPLICATION_NAME=api-gateway-service
@@ -225,10 +238,10 @@ services:
       - SPRING_CLOUD_GATEWAY_ROUTES[4]_URI=lb://user-service
       - SPRING_CLOUD_GATEWAY_ROUTES[4]_PREDICATES[0]=Path=/users
       - LOGGING_LEVEL_ROOT=info
-#      - LOGGING_LEVEL_COM_LANKYDAN_SERVICE=error
-#      - LOGGING_PATH=logs
-#      - LOGGING_FILE=${logging_path}/log.log
-#      - LOGGING_PATTERN_FILE=%d{dd-MM-yyyy HH:mm:ss} [%file:%line]  - %msg%n
+      #      - LOGGING_LEVEL_COM_LANKYDAN_SERVICE=error
+      #      - LOGGING_PATH=logs
+      #      - LOGGING_FILE=${logging_path}/log.log
+      #      - LOGGING_PATTERN_FILE=%d{dd-MM-yyyy HH:mm:ss} [%file:%line]  - %msg%n
       - LOGGING_PATTERN_CONSOLE=%d{dd-MM-yyyy HH:mm:ss} [%-5level] [%file:%line] - %msg%n
 
 

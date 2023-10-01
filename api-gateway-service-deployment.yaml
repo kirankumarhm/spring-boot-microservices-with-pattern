@@ -1,0 +1,89 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f docker-compose.yml --volumes hostPath
+    kompose.service.expose: lb
+    kompose.service.external-traffic-policy: local
+    kompose.service.type: loadbalancer
+    kompose.version: 1.31.0 (a04ecdb9e)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: api-gateway-service
+  name: api-gateway-service
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: api-gateway-service
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        io.kompose.network/microservice-example-default: "true"
+        io.kompose.service: api-gateway-service
+    spec:
+      containers:
+        - args:
+            - sh
+            - -c
+            - sleep 2m
+          env:
+            - name: EUREKA_CLIENT_SERVICE-URL_DEFAULT-ZONE
+              value: http://discovery-service:8761/eureka/
+            - name: LOGGING_LEVEL_ROOT
+              value: info
+            - name: LOGGING_PATTERN_CONSOLE
+              value: '%d{dd-MM-yyyy HH:mm:ss} [%-5level] [%file:%line] - %msg%n'
+            - name: SERVER_PORT
+              value: "8084"
+            - name: SPRING_APPLICATION_NAME
+              value: api-gateway-service
+            - name: SPRING_CLOUD_GATEWAY_ROUTES0_ID
+              value: product-service
+            - name: SPRING_CLOUD_GATEWAY_ROUTES0_PREDICATES0
+              value: Path=/api/product
+            - name: SPRING_CLOUD_GATEWAY_ROUTES0_URI
+              value: lb://product-service
+            - name: SPRING_CLOUD_GATEWAY_ROUTES1_FILTERS0
+              value: SetPath=/
+            - name: SPRING_CLOUD_GATEWAY_ROUTES1_ID
+              value: discovery-server
+            - name: SPRING_CLOUD_GATEWAY_ROUTES1_PREDICATES0
+              value: Path=/eureka/web
+            - name: SPRING_CLOUD_GATEWAY_ROUTES1_URI
+              value: http://discovery-service:8761
+            - name: SPRING_CLOUD_GATEWAY_ROUTES2_ID
+              value: discovery-server-static
+            - name: SPRING_CLOUD_GATEWAY_ROUTES2_PREDICATES0
+              value: Path=/eureka/**
+            - name: SPRING_CLOUD_GATEWAY_ROUTES2_URI
+              value: http://discovery-service:8761
+            - name: SPRING_CLOUD_GATEWAY_ROUTES3_ID
+              value: order-service
+            - name: SPRING_CLOUD_GATEWAY_ROUTES3_PREDICATES0
+              value: Path=/api/order
+            - name: SPRING_CLOUD_GATEWAY_ROUTES3_URI
+              value: lb://order-service
+            - name: SPRING_CLOUD_GATEWAY_ROUTES4_ID
+              value: user-service
+            - name: SPRING_CLOUD_GATEWAY_ROUTES4_PREDICATES0
+              value: Path=/users
+            - name: SPRING_CLOUD_GATEWAY_ROUTES4_URI
+              value: lb://user-service
+            - name: SPRING_CLOUD_BOOTSTRAP_ENABLED
+              value: "true"
+            - name: SPRING_CLOUD_KUBERNETES_SECRETS_ENABLEAPI
+              value: "true"
+          image: kirankumarhm/api-gateway-service:0.0.1
+          imagePullPolicy: Always
+          name: api-gateway-service
+          ports:
+            - containerPort: 8084
+              hostPort: 8084
+              protocol: TCP
+          resources: {}
+      hostname: api-gateway-service
+      restartPolicy: Always
+
