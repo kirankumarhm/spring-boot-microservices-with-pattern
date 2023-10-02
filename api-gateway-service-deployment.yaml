@@ -1,13 +1,6 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
-    kompose.cmd: kompose convert -f docker-compose.yml --volumes hostPath
-    kompose.service.expose: lb
-    kompose.service.external-traffic-policy: local
-    kompose.service.type: loadbalancer
-    kompose.version: 1.31.0 (a04ecdb9e)
-  creationTimestamp: null
   labels:
     io.kompose.service: api-gateway-service
   name: api-gateway-service
